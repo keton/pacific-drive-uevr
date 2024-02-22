@@ -17,6 +17,7 @@
 #include "uevr/Plugin.hpp"
 
 #include "pdsdk/MainCharacter.hpp"
+#include "pdsdk/MainCharacterManager.hpp"
 #include "pdsdk/PlayerCar.hpp"
 
 #include "Math.hpp"
@@ -233,6 +234,7 @@ class PacificDrivePlugin : public uevr::Plugin
 			ImGui::Text("is_aim_allowed(): %u", vr->is_aim_allowed());
 			ImGui::Text("get_aim_method(): %u", vr->get_aim_method());
 			ImGui::Text("m_player_in_car: %u", m_player_in_car);
+			ImGui::Text("m_force_player_in_car: %u", m_force_player_in_car);
 			ImGui::Text("Angle X:%.2f Y:%.2f Z:%.2f", m_euler.x, m_euler.y, m_euler.z);
 			ImGui::Text("Delta X:%.2f Y:%.2f Z:%.2f", m_euler_delta.x, m_euler_delta.y,
 						m_euler_delta.z);
@@ -264,7 +266,7 @@ class PacificDrivePlugin : public uevr::Plugin
 	void process_car_enter_exit(MainCharacter *const main_character, PlayerCar *const player_car,
 								float delta)
 	{
-		bool current_player_in_car = main_character->is_player_in_car();
+		bool current_player_in_car = main_character->is_player_in_car() || m_force_player_in_car;
 
 		if(current_player_in_car != m_player_in_car) {
 			if(current_player_in_car) {
@@ -294,7 +296,7 @@ class PacificDrivePlugin : public uevr::Plugin
 		glm::vec3 right_controller_forward{};
 		glm::vec3 standing_origin{};
 
-		bool player_in_car = main_character->is_player_in_car();
+		bool player_in_car = main_character->is_player_in_car() || m_force_player_in_car;
 
 		const auto vr = API::get()->param()->vr;
 
@@ -426,6 +428,11 @@ class PacificDrivePlugin : public uevr::Plugin
 	void process_on_level_load(MainCharacter *const main_character, PlayerCar *const player_car,
 							   float delta)
 	{
+		const auto main_character_manager = MainCharacterManager::get_instance();
+		if(!main_character_manager) {
+			return;
+		}
+
 		const auto main_character_instance = main_character->get_full_name();
 		const auto player_car_instance = player_car->get_full_name();
 
@@ -435,12 +442,32 @@ class PacificDrivePlugin : public uevr::Plugin
 
 			API::get()->log_info("process_on_level_load");
 
-			m_player_in_car = false;
+			if(main_character_manager->get_main_character_movement_mode() ==
+			   MainCharacterManager::ALS_MovementMode::Car) {
+				// hack around get_player_in_car() not working on zone load
+				API::get()->log_info("load_in_car_hack: activated");
+
+				m_force_player_in_car = true;
+			} else {
+				API::get()->log_info("load_in_car_hack: not needed");
+
+				m_force_player_in_car = false;
+			}
 
 			m_active_item_name = {};
 
+			m_player_in_car = false;
+
 			m_last_aim_method = AimMethod::GAME;
 			m_euler_delta = {};
+		}
+
+		if(m_force_player_in_car && (main_character_manager->get_main_character_movement_mode() !=
+									 MainCharacterManager::ALS_MovementMode::Car)) {
+			// player got out of the car for the first time, disable the hack
+			API::get()->log_info("load_in_car_hack: deactivated");
+
+			m_force_player_in_car = false;
 		}
 
 		m_last_main_character_instance = main_character_instance;
@@ -479,6 +506,8 @@ class PacificDrivePlugin : public uevr::Plugin
 	glm::quat m_last_aim_rot{};
 
 	bool m_player_in_car = false;
+	bool m_force_player_in_car = false;
+
 	AimMethod m_last_aim_method = AimMethod::GAME;
 
 	std::wstring m_active_item_name{};
