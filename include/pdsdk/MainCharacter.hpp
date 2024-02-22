@@ -32,6 +32,10 @@ class MainCharacter : private API::UObject
 	float get_player_in_car_percent()
 	{
 		static const auto func = static_class()->find_function(L"GetPlayerInCarPercent");
+		if(!func) {
+			API::get()->log_error("MainCharacter::GetPlayerInCarPercent not found");
+			return 0.0f;
+		}
 
 		struct
 		{
@@ -39,7 +43,6 @@ class MainCharacter : private API::UObject
 		} params{.result = 0.0};
 
 		process_event(func, &params);
-		// API::get()->log_info("get_player_in_car_percent(): %f", params.result);
 
 		return params.result;
 	}
@@ -52,6 +55,10 @@ class MainCharacter : private API::UObject
 	BaseHandManifestation *get_active_hand_item(bool ignore_lifespan = false)
 	{
 		static const auto func = static_class()->find_function(L"GetActiveHandItem");
+		if(!func) {
+			API::get()->log_error("MainCharacter::GetActiveHandItem not found");
+			return nullptr;
+		}
 
 		struct
 		{
