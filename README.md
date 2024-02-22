@@ -1,11 +1,14 @@
 # UEVR Plugin for Pacific drive demo
 
-__Work In Progress__ not compatible with the full game. Expect problems. Works fine with demo.
-
 ## Features
-* When UEVR is set to left or right controller aiming method in-car aiming works correctly
+* Fixes in-car camera. Set your aiming method to left or right controller and the you can rotate the view inside the car using motion.
 * car will start and be put to drive when entering, stop and put to park on exiting
 * hand held items bound to (left/right) motion controller
+
+## Known issues
+
+If you travel while in car or load a save when you are inside **you need to exit and enter the car** before in-car camera will work.
+This is because game function we use - `getPlayerInCarPercent()`has a bug and returns 0 instead of 1 in those conditions.
 
 ## Building
 

@@ -39,13 +39,14 @@ class MainCharacter : private API::UObject
 		} params{.result = 0.0};
 
 		process_event(func, &params);
+		// API::get()->log_info("get_player_in_car_percent(): %f", params.result);
 
 		return params.result;
 	}
 
 	bool is_player_in_car()
 	{
-		return get_player_in_car_percent() == 1.0f;
+		return get_player_in_car_percent() >= 1.0f; // actually can go above 100%
 	}
 
 	BaseHandManifestation *get_active_hand_item(bool ignore_lifespan = false)

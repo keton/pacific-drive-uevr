@@ -232,6 +232,7 @@ class PacificDrivePlugin : public uevr::Plugin
 		if(ImGui::Begin("Pacific Drive Plugin")) {
 			ImGui::Text("is_aim_allowed(): %u", vr->is_aim_allowed());
 			ImGui::Text("get_aim_method(): %u", vr->get_aim_method());
+			ImGui::Text("m_player_in_car: %u", m_player_in_car);
 			ImGui::Text("Angle X:%.2f Y:%.2f Z:%.2f", m_euler.x, m_euler.y, m_euler.z);
 			ImGui::Text("Delta X:%.2f Y:%.2f Z:%.2f", m_euler_delta.x, m_euler_delta.y,
 						m_euler_delta.z);
@@ -267,10 +268,14 @@ class PacificDrivePlugin : public uevr::Plugin
 
 		if(current_player_in_car != m_player_in_car) {
 			if(current_player_in_car) {
+				API::get()->log_info("CarEnterExit::Enter");
+
 				// player entered car event
 				plugin_car_controller_aim_on_car_enter_exit(player_car, CarEnterExit::Enter);
 				plugin_car_autostart_on_car_enter_exit(player_car, CarEnterExit::Enter);
 			} else {
+				API::get()->log_info("CarEnterExit::Exit");
+
 				// player exited car event
 				plugin_car_controller_aim_on_car_enter_exit(player_car, CarEnterExit::Exit);
 				plugin_car_autostart_on_car_enter_exit(player_car, CarEnterExit::Exit);
