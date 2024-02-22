@@ -17,7 +17,7 @@ class AActor : public API::UObject
 
 	void set_actor_scale3d(const UEVR_Vector3f *const new_scale)
 	{
-		const auto func = AActor::static_class()->find_function(L"SetActorScale3D");
+		static const auto func = AActor::static_class()->find_function(L"SetActorScale3D");
 		if(!func) {
 			API::get()->log_error("AActor::SetActorScale3D not found");
 			return;
@@ -43,7 +43,6 @@ class AActor : public API::UObject
 		}
 
 		auto func = func_candidate_1 != nullptr ? func_candidate_1 : func_candidate_2;
-		// K2_GetRootComponent
 		if(!func) {
 			API::get()->log_error("AActor::GetRootComponent not found");
 			return nullptr;

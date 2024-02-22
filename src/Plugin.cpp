@@ -18,7 +18,8 @@
 
 #include "pdsdk/MainCharacter.hpp"
 #include "pdsdk/MainCharacterManager.hpp"
-#include "pdsdk/PlayerCar.hpp"
+#include "pdsdk/PlayerCarIntro.hpp"
+#include "pdsdk/PlayerCarNew.hpp"
 
 #include "Math.hpp"
 
@@ -242,7 +243,9 @@ class PacificDrivePlugin : public uevr::Plugin
 		}
 	}
 
-	void plugin_car_autostart_on_car_enter_exit(PlayerCar *const player_car, CarEnterExit state)
+	template <PlayerCarConcept T>
+	void plugin_car_autostart_on_car_enter_exit(PlayerCarInterface<T> *const player_car,
+												CarEnterExit state)
 	{
 		if(state == CarEnterExit::Enter) {
 			player_car->toggle_ignition_state(PlayerCar::IgnitionState::On);
@@ -253,7 +256,8 @@ class PacificDrivePlugin : public uevr::Plugin
 		}
 	}
 
-	void plugin_car_controller_aim_on_car_enter_exit(PlayerCar *const player_car,
+	template <PlayerCarConcept T>
+	void plugin_car_controller_aim_on_car_enter_exit(PlayerCarInterface<T> *const player_car,
 													 CarEnterExit state)
 	{
 		if(state == CarEnterExit::Enter) {
@@ -263,8 +267,9 @@ class PacificDrivePlugin : public uevr::Plugin
 		}
 	}
 
-	void process_car_enter_exit(MainCharacter *const main_character, PlayerCar *const player_car,
-								float delta)
+	template <PlayerCarConcept T>
+	void process_car_enter_exit(MainCharacter *const main_character,
+								PlayerCarInterface<T> *const player_car, float delta)
 	{
 		bool current_player_in_car = main_character->is_player_in_car() || m_force_player_in_car;
 
@@ -287,8 +292,9 @@ class PacificDrivePlugin : public uevr::Plugin
 		m_player_in_car = current_player_in_car;
 	}
 
-	void process_controller_aim(MainCharacter *const main_character, PlayerCar *const player_car,
-								float delta)
+	template <PlayerCarConcept T>
+	void process_controller_aim(MainCharacter *const main_character,
+								PlayerCarInterface<T> *const player_car, float delta)
 	{
 		glm::vec3 og_controller_pos{};
 		glm::quat og_controller_rot{};
@@ -357,8 +363,9 @@ class PacificDrivePlugin : public uevr::Plugin
 		m_last_aim_method = aim_method;
 	}
 
-	void process_hand_items(MainCharacter *const main_character, PlayerCar *const player_car,
-							float delta)
+	template <PlayerCarConcept T>
+	void process_hand_items(MainCharacter *const main_character,
+							PlayerCarInterface<T> *const player_car, float delta)
 	{
 		const auto item = main_character->get_active_hand_item();
 
@@ -425,8 +432,9 @@ class PacificDrivePlugin : public uevr::Plugin
 		m_active_item_name = item_name;
 	}
 
-	void process_on_level_load(MainCharacter *const main_character, PlayerCar *const player_car,
-							   float delta)
+	template <PlayerCarConcept T>
+	void process_on_level_load(MainCharacter *const main_character,
+							   PlayerCarInterface<T> *const player_car, float delta)
 	{
 		const auto main_character_manager = MainCharacterManager::get_instance();
 		if(!main_character_manager) {
@@ -454,10 +462,14 @@ class PacificDrivePlugin : public uevr::Plugin
 				m_force_player_in_car = false;
 			}
 
+			if(m_force_player_in_car && player_car_instance.contains(L"BP_PlayerCar_Intro")) {
+				// don't trigger on car enter event in intro
+				m_player_in_car = true;
+			} else {
+				m_player_in_car = false;
+			}
+
 			m_active_item_name = {};
-
-			m_player_in_car = false;
-
 			m_last_aim_method = AimMethod::GAME;
 			m_euler_delta = {};
 		}
@@ -474,6 +486,16 @@ class PacificDrivePlugin : public uevr::Plugin
 		m_last_player_car_instance = player_car_instance;
 	}
 
+	template <PlayerCarConcept T>
+	void plugin_on_pre_engine_tick_inner(MainCharacter *const main_character,
+										 PlayerCarInterface<T> *const player_car, float delta)
+	{
+		process_on_level_load(main_character, player_car, delta);
+		process_car_enter_exit(main_character, player_car, delta);
+		process_controller_aim(main_character, player_car, delta);
+		process_hand_items(main_character, player_car, delta);
+	}
+
 	void plugin_on_pre_engine_tick(API::UGameEngine *engine, float delta)
 	{
 		const auto main_character = MainCharacter::get_instance();
@@ -482,16 +504,25 @@ class PacificDrivePlugin : public uevr::Plugin
 			return;
 		}
 
-		const auto player_car = PlayerCar::get_instance();
-		if(!player_car) {
-			API::get()->log_error("PlayerCar::get_instance() returned NULL");
+		const auto player_car_new = PlayerCarNew::get_instance();
+		const auto player_car_intro = PlayerCarIntro::get_instance();
+
+		if(!player_car_new && !player_car_intro) {
+			API::get()->log_error("PlayerCarNew::get_instance() and PlayerCarIntro::get_instance() "
+								  "both returned NULL");
+
+			// force to look for PlayerCarIntro class so we can find instance on
+			// normal gameplay -> menu -> intro transition
+			PlayerCarIntro::static_class(true);
+
 			return;
 		}
 
-		process_on_level_load(main_character, player_car, delta);
-		process_car_enter_exit(main_character, player_car, delta);
-		process_controller_aim(main_character, player_car, delta);
-		process_hand_items(main_character, player_car, delta);
+		if(player_car_new) {
+			plugin_on_pre_engine_tick_inner(main_character, player_car_new, delta);
+		} else {
+			plugin_on_pre_engine_tick_inner(main_character, player_car_intro, delta);
+		}
 	}
 
   private:
