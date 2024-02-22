@@ -418,6 +418,30 @@ class PacificDrivePlugin : public uevr::Plugin
 		m_active_item_name = item_name;
 	}
 
+	void process_on_level_load(MainCharacter *const main_character, PlayerCar *const player_car,
+							   float delta)
+	{
+		const auto main_character_instance = main_character->get_full_name();
+		const auto player_car_instance = player_car->get_full_name();
+
+		if((main_character_instance != m_last_main_character_instance) ||
+		   (player_car_instance != m_last_player_car_instance)) {
+			// new level or save game has been loaded
+
+			API::get()->log_info("process_on_level_load");
+
+			m_player_in_car = false;
+
+			m_active_item_name = {};
+
+			m_last_aim_method = AimMethod::GAME;
+			m_euler_delta = {};
+		}
+
+		m_last_main_character_instance = main_character_instance;
+		m_last_player_car_instance = player_car_instance;
+	}
+
 	void plugin_on_pre_engine_tick(API::UGameEngine *engine, float delta)
 	{
 		const auto main_character = MainCharacter::get_instance();
@@ -432,6 +456,7 @@ class PacificDrivePlugin : public uevr::Plugin
 			return;
 		}
 
+		process_on_level_load(main_character, player_car, delta);
 		process_car_enter_exit(main_character, player_car, delta);
 		process_controller_aim(main_character, player_car, delta);
 		process_hand_items(main_character, player_car, delta);
@@ -452,6 +477,9 @@ class PacificDrivePlugin : public uevr::Plugin
 	AimMethod m_last_aim_method = AimMethod::GAME;
 
 	std::wstring m_active_item_name{};
+
+	std::wstring m_last_main_character_instance{};
+	std::wstring m_last_player_car_instance{};
 };
 
 // Actually creates the plugin. Very important that this global is created.
