@@ -6,6 +6,7 @@ Download UEVR Profile [here](https://github.com/keton/pacific-drive-uevr/release
 * Fixes in-car camera. Set your aiming method to left or right controller and then you can rotate the view inside the car using motion.
 * Car will start and be put to drive when entering, stop and put to park on exiting
 * Handheld items bound to (left/right) motion controller
+* Scales (some) items to correct size in VR. This is still work in progress.
 
 ## Building
 
