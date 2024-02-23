@@ -2,11 +2,8 @@ name: CMake on a single platform
 
 on:
   push:
-    branches: ["master"]
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
-  pull_request:
-    branches: ["master"]
 
 permissions:
   contents: write
