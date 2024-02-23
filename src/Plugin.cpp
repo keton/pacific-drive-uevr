@@ -233,7 +233,7 @@ class PacificDrivePlugin : public uevr::Plugin
 
 		if(ImGui::Begin("Pacific Drive Plugin")) {
 			ImGui::Text("is_aim_allowed(): %u", vr->is_aim_allowed());
-			ImGui::Text("get_aim_method(): %u", vr->get_aim_method());
+			ImGui::Text("m_last_aim_method: %u", m_last_aim_method);
 			ImGui::Text("m_player_in_car: %u", m_player_in_car);
 			ImGui::Text("m_force_player_in_car: %u", m_force_player_in_car);
 			ImGui::Text("Angle X:%.2f Y:%.2f Z:%.2f", m_euler.x, m_euler.y, m_euler.z);
@@ -306,7 +306,10 @@ class PacificDrivePlugin : public uevr::Plugin
 
 		const auto vr = API::get()->param()->vr;
 
-		const auto aim_method = (AimMethod)vr->get_aim_method();
+		// UEVR will obscure true aim method behind AimMode::Game when aim is not allowed
+		const auto aim_method =
+			(vr->is_aim_allowed()) ? (AimMethod)vr->get_aim_method() : m_last_aim_method;
+
 		bool is_using_controller =
 			(aim_method == AimMethod::LEFT_CONTROLLER || aim_method == AimMethod::RIGHT_CONTROLLER);
 
@@ -386,7 +389,12 @@ class PacificDrivePlugin : public uevr::Plugin
 
 			item->set_actor_scale3d(&new_scale);
 
-			const auto aim_method = API::get()->param()->vr->get_aim_method();
+			if(m_last_aim_method != AimMethod::LEFT_CONTROLLER &&
+			   m_last_aim_method != AimMethod::RIGHT_CONTROLLER) {
+
+				m_active_item_name = item_name;
+				return;
+			}
 
 			API::UObject *attach_component = nullptr;
 
@@ -409,8 +417,9 @@ class PacificDrivePlugin : public uevr::Plugin
 				auto mc_state =
 					API::UObjectHook::get_or_add_motion_controller_state(attach_component);
 				if(mc_state) {
-					mc_state->set_hand((aim_method == AimMethod::RIGHT_CONTROLLER) ? AimHand::RIGHT
-																				   : AimHand::LEFT);
+					mc_state->set_hand((m_last_aim_method == AimMethod::RIGHT_CONTROLLER)
+										   ? AimHand::RIGHT
+										   : AimHand::LEFT);
 
 					const auto rot = item->get_rotation_offset();
 					API::get()->log_info("Rotation quat w:%f, x:%f, y:%f, z:%f", rot.w, rot.x,
