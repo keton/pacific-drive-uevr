@@ -1,0 +1,2 @@
+Engine_r.DepthOfFieldQuality=0
+Engine_r.MotionBlurQuality=0
