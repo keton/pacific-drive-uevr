@@ -1,5 +1,6 @@
 #include <map>
 
+#include "Math.hpp"
 #include "pdsdk/BaseHandManifestation.hpp"
 
 using bmt = BaseHandManifestation::Type;
@@ -42,26 +43,35 @@ static const std::map<std::wstring, BaseHandManifestation::Type> name_prefix_to_
 
 // item type to scale that should be applied on attach
 static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_scale{
+	// clang-format off
+
 	{bmt::Unknown, {0.7f, 0.7f, 0.7f}}, // default scale if not found
 
-	{bmt::Breaker, {0.5f, 0.5f, 0.5f}},		{bmt::FuelCan, {1.2f, 1.2f, 1.2f}},
-	{bmt::Scrapper, {0.45f, 0.45f, 0.45f}}, {bmt::Unlocker, {0.7f, 0.7f, 0.7f}},
+	{bmt::Breaker, {0.5f, 0.5f, 0.5f}},
+	{bmt::FuelCan, {1.2f, 1.2f, 1.2f}},
+	{bmt::Scrapper, {0.45f, 0.45f, 0.45f}},
+	{bmt::Unlocker, {0.7f, 0.7f, 0.7f}},
+	{bmt::Vacuum, {0.5f, 0.5f, 0.5f}},
+
+	// clang-format on
 };
 
 // item type to rotation that should be applied on attach
-static const std::map<BaseHandManifestation::Type, UEVR_Quaternionf> item_type_to_rotation_offset{
-	{bmt::Unknown, {.w = 1.0f, .x = 0.0f, .y = 0.0f, .z = 0.0f}}, // default rotation if not found
+static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_rotation_offset{
+	{bmt::Unknown, {.x = 0.0f, .y = 0.0f, .z = 0.0f}}, // default rotation if not found
 
-	{bmt::GarageGasPumpHandle, {.w = 0.4062192f, .x = 0.591627f, .y = 0.4482973f, .z = 0.5329099f}},
-	{bmt::Unlocker, {.w = 0.0718518f, .x = -0.0156036f, .y = -0.1690994f, .z = 0.9828526f}},
+	{bmt::Flashlight, {1.438f, -3.129f, -2.968f}},
+	{bmt::GarageGasPumpHandle, {.x = -0.016f, .y = 1.607f, .z = 1.593f}},
+	{bmt::Unlocker, {.x = 0.007f, .y = 0.081f, .z = -3.129f}},
 };
 
 // item type to position offset that should be applied on attach
 static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_position_offset{
-	{bmt::Unknown, {0.0f, 0.0f, 0.0f}}, // default positon if not found
+	{bmt::Unknown, {0.0f, 0.0f, 0.0f}}, // default position if not found
 
-	{bmt::GarageGasPumpHandle, {-4.7f, 2.215f, -6.1f}},
-	{bmt::Unlocker, {-4.6f, 33.089f, 41.013f}},
+	{bmt::Flashlight, {-2.789f, -0.426f, 8.980f}},
+	{bmt::GarageGasPumpHandle, {-18.852f, -4.755f, -18.571f}},
+	{bmt::Unlocker, {3.587f, 44.140f, 18.766f}},
 };
 
 const UEVR_Vector3f BaseHandManifestation::get_scale()
@@ -84,16 +94,24 @@ const UEVR_Quaternionf BaseHandManifestation::get_rotation_offset()
 {
 	const auto type = get_type();
 
-	UEVR_Quaternionf ret{};
+	UEVR_Vector3f rotation{};
 
 	const auto it = item_type_to_rotation_offset.find(type);
 	if(it != item_type_to_rotation_offset.end()) {
-		ret = it->second;
+		rotation = it->second;
 	} else {
-		ret = item_type_to_rotation_offset.at(Unknown);
+		rotation = item_type_to_rotation_offset.at(Unknown);
 	}
 
-	return ret;
+	const auto rotation_glm_mat = glm::yawPitchRoll(-rotation.y, rotation.x, -rotation.z);
+	const auto rotation_glm_quat = glm::quat{rotation_glm_mat};
+
+	return {
+		.w = rotation_glm_quat.w,
+		.x = rotation_glm_quat.x,
+		.y = rotation_glm_quat.y,
+		.z = rotation_glm_quat.z,
+	};
 }
 
 const UEVR_Vector3f BaseHandManifestation::get_position_offset()
