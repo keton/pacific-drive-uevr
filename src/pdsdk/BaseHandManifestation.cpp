@@ -62,6 +62,7 @@ static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_r
 
 	{bmt::Flashlight, {1.438f, -3.129f, -2.968f}},
 	{bmt::GarageGasPumpHandle, {.x = -0.016f, .y = 1.607f, .z = 1.593f}},
+	{bmt::ResourceGasPumpHandle, {.x = 0.057f, .y = 1.622f, .z = 1.685f}},
 	{bmt::Unlocker, {.x = 0.007f, .y = 0.081f, .z = -3.129f}},
 };
 
@@ -71,6 +72,7 @@ static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_p
 
 	{bmt::Flashlight, {-2.789f, -0.426f, 8.980f}},
 	{bmt::GarageGasPumpHandle, {-18.852f, -4.755f, -18.571f}},
+	{bmt::ResourceGasPumpHandle, {-7.775f, 6.137f, -7.347f}},
 	{bmt::Unlocker, {3.587f, 44.140f, 18.766f}},
 };
 
