@@ -1,5 +1,7 @@
 # UEVR Compatibility Plugin for Pacific Drive
 
+Download UEVR Profile [here](https://github.com/keton/pacific-drive-uevr/releases/latest)
+
 ## Features
 * Fixes in-car camera. Set your aiming method to left or right controller and then you can rotate the view inside the car using motion.
 * Car will start and be put to drive when entering, stop and put to park on exiting
