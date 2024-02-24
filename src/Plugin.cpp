@@ -162,6 +162,72 @@ class PacificDrivePlugin : public uevr::Plugin
 		}
 	}
 
+	/*
+		remap how system button works
+		* short press - 'select' -> inventory
+		* long press - 'start' -> load/save/quit menu
+		* longer press - 'start' push and hold -> toggle quest list mode
+	*/
+	void on_xinput_get_state(uint32_t *retval, uint32_t user_index, XINPUT_STATE *state) override
+	{
+		const auto param = API::get()->param();
+		const auto vr = param->vr;
+
+		if(vr->get_lowest_xinput_index() != user_index || !vr->is_using_controllers() ||
+		   param->functions->is_drawing_ui() || m_last_aim_method == AimMethod::GAME) {
+
+			last_is_system_button_down = false;
+			last_system_button_press = {};
+
+			return;
+		}
+
+		state->Gamepad.wButtons &= ~XINPUT_GAMEPAD_START;
+		state->Gamepad.wButtons &= ~XINPUT_GAMEPAD_BACK;
+
+		const auto a_system_button = vr->get_action_handle("/actions/default/in/SystemButton");
+		const auto is_system_button_down = vr->is_action_active_any_joystick(a_system_button);
+
+		const auto now = std::chrono::high_resolution_clock::now();
+		const auto system_button_press_duration = now - last_system_button_press;
+		const auto is_system_button_long_press =
+			(system_button_press_duration > system_button_long_press_duration);
+
+		if(is_system_button_down) {
+			if(is_system_button_down != last_is_system_button_down) {
+				// button press event
+				API::get()->log_info("on_xinput_get_state(): System button down");
+
+				last_system_button_press = std::chrono::high_resolution_clock::now();
+			} else {
+				// button hold event
+
+				if(is_system_button_long_press) {
+					API::get()->log_info("on_xinput_get_state(): pressing 'start'");
+
+					state->Gamepad.wButtons |= XINPUT_GAMEPAD_START;
+				}
+			}
+		} else {
+			if(is_system_button_down != last_is_system_button_down) {
+				// button release event
+
+				API::get()->log_info("on_xinput_get_state(): System button release after %lld ms",
+									 std::chrono::duration_cast<std::chrono::milliseconds>(
+										 system_button_press_duration)
+										 .count());
+
+				if(!is_system_button_long_press) {
+					API::get()->log_info("on_xinput_get_state(): pressing 'select'");
+
+					state->Gamepad.wButtons |= XINPUT_GAMEPAD_BACK;
+				}
+			}
+		}
+
+		last_is_system_button_down = is_system_button_down;
+	}
+
   private:
 	enum CarEnterExit
 	{
@@ -481,6 +547,9 @@ class PacificDrivePlugin : public uevr::Plugin
 			m_active_item_name = {};
 			m_last_aim_method = AimMethod::GAME;
 			m_euler_delta = {};
+
+			last_is_system_button_down = false;
+			last_system_button_press = {};
 		}
 
 		if(m_force_player_in_car && (main_character_manager->get_main_character_movement_mode() !=
@@ -554,6 +623,11 @@ class PacificDrivePlugin : public uevr::Plugin
 
 	std::wstring m_last_main_character_instance{};
 	std::wstring m_last_player_car_instance{};
+
+	bool last_is_system_button_down = false;
+	std::chrono::steady_clock::time_point last_system_button_press{};
+	const std::chrono::milliseconds system_button_long_press_duration =
+		std::chrono::milliseconds(200);
 };
 
 // Actually creates the plugin. Very important that this global is created.
