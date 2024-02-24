@@ -166,7 +166,7 @@ class PacificDrivePlugin : public uevr::Plugin
 		remap how system button works
 		* short press - 'select' -> inventory
 		* long press - 'start' -> load/save/quit menu
-		* longer press - 'start' push and hold -> toggle quest list mode
+		* longer press - 'select' push and hold -> toggle quest list mode
 	*/
 	void on_xinput_get_state(uint32_t *retval, uint32_t user_index, XINPUT_STATE *state) override
 	{
@@ -190,8 +190,10 @@ class PacificDrivePlugin : public uevr::Plugin
 
 		const auto now = std::chrono::high_resolution_clock::now();
 		const auto system_button_press_duration = now - last_system_button_press;
-		const auto is_system_button_long_press =
-			(system_button_press_duration > system_button_long_press_duration);
+		const auto is_start_button_long_press =
+			(system_button_press_duration > system_menu_long_press_duration);
+		const auto is_journal_long_press =
+			(system_button_press_duration > journal_long_press_duration);
 
 		if(is_system_button_down) {
 			if(is_system_button_down != last_is_system_button_down) {
@@ -202,10 +204,10 @@ class PacificDrivePlugin : public uevr::Plugin
 			} else {
 				// button hold event
 
-				if(is_system_button_long_press) {
-					API::get()->log_info("on_xinput_get_state(): pressing 'start'");
+				if(is_journal_long_press) {
+					// API::get()->log_info("on_xinput_get_state(): long pressing 'select'");
 
-					state->Gamepad.wButtons |= XINPUT_GAMEPAD_START;
+					state->Gamepad.wButtons |= XINPUT_GAMEPAD_BACK;
 				}
 			}
 		} else {
@@ -217,10 +219,14 @@ class PacificDrivePlugin : public uevr::Plugin
 										 system_button_press_duration)
 										 .count());
 
-				if(!is_system_button_long_press) {
+				if(!is_start_button_long_press) {
 					API::get()->log_info("on_xinput_get_state(): pressing 'select'");
 
 					state->Gamepad.wButtons |= XINPUT_GAMEPAD_BACK;
+				} else if(is_start_button_long_press && !is_journal_long_press) {
+					API::get()->log_info("on_xinput_get_state(): pressing 'start'");
+
+					state->Gamepad.wButtons |= XINPUT_GAMEPAD_START;
 				}
 			}
 		}
@@ -626,8 +632,12 @@ class PacificDrivePlugin : public uevr::Plugin
 
 	bool last_is_system_button_down = false;
 	std::chrono::steady_clock::time_point last_system_button_press{};
-	const std::chrono::milliseconds system_button_long_press_duration =
+
+	const std::chrono::milliseconds system_menu_long_press_duration =
 		std::chrono::milliseconds(200);
+
+	const std::chrono::milliseconds journal_long_press_duration =
+		system_menu_long_press_duration + std::chrono::milliseconds(1000);
 };
 
 // Actually creates the plugin. Very important that this global is created.
