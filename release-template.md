@@ -13,5 +13,6 @@ Uses **right motion controller** for camera and held items
 In case your new aim method does not stick close the game and inject again.
 
 New **inventory access** method:
-* to access inventory short press system menu button (i.e. left oculus button on quest)
-* to access save/load/quit menu long press system menu button
+* to access inventory **short press** (<200ms) system menu button (i.e. left oculus button on quest)
+* to access save/load/quit menu **long press** system menu button (200-1200ms)
+* to access long press of 'select' (radio transmissions, journal links, quest list collapse) **keep holding** system menu button longer than 1200ms. The in game marker will start to fill and once it's full menu will trigger.

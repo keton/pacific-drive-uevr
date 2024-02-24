@@ -7,7 +7,10 @@ Download UEVR Profile [here](https://github.com/keton/pacific-drive-uevr/release
 * Car will start and be put to drive when entering, stop and put to park on exiting
 * Handheld items bound to (left/right) motion controller
 * Scales (some) items to correct size in VR. This is still work in progress.
-* makes short press of system menu button spawn inventory and long press spawn save/load menu.
+* changes how system button works
+	* short press of system menu button spawns inventory (<200ms)
+	* long press spawns save/load menu (200-1200ms)
+	* press and hold spawns journal and collapse quest list (>1200ms)
 
 ## Building
 
