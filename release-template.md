@@ -1,6 +1,8 @@
 ### Pacific Drive UEVR profile
 
-Import this profile to UEVR using dedicated function
+Import `PenDriverPro-Win64-Shipping.zip` to UEVR using dedicated function in UEVR Injector. 
+
+Alternatively unpack it to `%APPDATA%\UnrealVRMod\PenDriverPro-Win64-Shipping` (you may need to create `UnrealVRMod` and `PenDriverPro-Win64-Shipping`)
 
 **You need UEVR nightly from this link**: https://github.com/praydog/UEVR-nightly/releases/tag/nightly-796-c25695a8c0ec35b556229046cc7011e27f4d42ee
 More recent versions **might** work. I don't accept bug reports unless they are reproducible on recommended version.
