@@ -10,6 +10,7 @@
 #include "imgui/imgui_impl_dx11.h"
 #include "imgui/imgui_impl_dx12.h"
 #include "imgui/imgui_impl_win32.h"
+#include "imgui_internal.h"
 
 #include "rendering/d3d11.hpp"
 #include "rendering/d3d12.hpp"
@@ -257,6 +258,34 @@ class PacificDrivePlugin : public uevr::Plugin
 		RIGHT
 	};
 
+	static void *ini_handler_read_open(ImGuiContext *, ImGuiSettingsHandler *, const char *name)
+	{
+		ImGuiID id = ImHashStr(name);
+		ImGuiWindowSettings *settings = new ImGuiWindowSettings();
+		settings->ID = id;
+		settings->WantApply = true;
+		return (void *)settings;
+	}
+
+	static void ini_handler_read_line(ImGuiContext *ctx, ImGuiSettingsHandler *handler, void *entry,
+									  const char *line)
+	{
+		int car_autostart = 0;
+
+		if(sscanf(line, "CarAutoStartEnable=%d", &car_autostart) == 1) {
+			m_car_autostart_allowed = (car_autostart == 1);
+		}
+	}
+
+	static void ini_handler_write_all(ImGuiContext *ctx, ImGuiSettingsHandler *handler,
+									  ImGuiTextBuffer *buf)
+	{
+		buf->reserve(buf->size() + 200); // ballpark reserve
+		buf->append("[UserData][Pacific Drive Plugin]\n");
+		buf->appendf("CarAutoStartEnable=%d\n", m_car_autostart_allowed);
+		buf->append("\n");
+	}
+
 	bool initialize_imgui()
 	{
 		if(m_initialized) {
@@ -271,6 +300,18 @@ class PacificDrivePlugin : public uevr::Plugin
 		static const auto imgui_ini =
 			API::get()->get_persistent_dir(L"pacific_drive_plugin.ini").string();
 		ImGui::GetIO().IniFilename = imgui_ini.c_str();
+
+		ImGuiSettingsHandler ini_handler;
+		ini_handler.TypeName = "UserData";
+		ini_handler.TypeHash = ImHashStr("UserData");
+		ini_handler.ReadOpenFn = &ini_handler_read_open;
+		ini_handler.ReadLineFn = &ini_handler_read_line;
+		ini_handler.WriteAllFn = &ini_handler_write_all;
+
+		ImGuiContext &g = *GImGui;
+		IM_ASSERT(g.Initialized);
+
+		g.SettingsHandlers.push_back(ini_handler);
 
 		const auto renderer_data = API::get()->param()->renderer;
 
@@ -300,10 +341,14 @@ class PacificDrivePlugin : public uevr::Plugin
 
 	void internal_frame()
 	{
-
 		const auto vr = API::get()->param()->vr;
 
 		if(ImGui::Begin("Pacific Drive Plugin")) {
+			ImGui::Checkbox("Auto start car on enter", &m_car_autostart_allowed);
+		}
+		ImGui::End();
+
+		if(ImGui::Begin("Pacific Drive Debug Panel")) {
 			ImGui::Text("is_aim_allowed(): %u", vr->is_aim_allowed());
 			ImGui::Text("m_last_aim_method: %u", m_last_aim_method);
 			ImGui::Text("m_player_in_car: %u", m_player_in_car);
@@ -312,13 +357,19 @@ class PacificDrivePlugin : public uevr::Plugin
 			ImGui::Text("Delta X:%.2f Y:%.2f Z:%.2f", m_euler_delta.x, m_euler_delta.y,
 						m_euler_delta.z);
 			ImGui::Text("active item: %ls", m_active_item_name.c_str());
+			ImGui::Text("active m_car_autostart_allowed: %d", m_car_autostart_allowed);
 		}
+		ImGui::End();
 	}
 
 	template <PlayerCarConcept T>
 	void plugin_car_autostart_on_car_enter_exit(PlayerCarInterface<T> *const player_car,
 												CarEnterExit state)
 	{
+		if(!m_car_autostart_allowed) {
+			return;
+		}
+
 		if(state == CarEnterExit::Enter) {
 			player_car->toggle_ignition_state(PlayerCar::IgnitionState::On);
 			player_car->toggle_gearbox_state(PlayerCar::GearBoxState::Drive);
@@ -570,10 +621,29 @@ class PacificDrivePlugin : public uevr::Plugin
 		m_last_player_car_instance = player_car_instance;
 	}
 
+	void process_ui_enter_exit()
+	{
+		const bool is_drawing_ui = API::get()->param()->functions->is_drawing_ui();
+
+		if(is_drawing_ui == last_is_is_drawing_ui) {
+			return;
+		}
+
+		if(is_drawing_ui) {
+			// menu enter event
+		} else {
+			// menu exit event
+			ImGui::MarkIniSettingsDirty();
+		}
+
+		last_is_is_drawing_ui = is_drawing_ui;
+	}
+
 	template <PlayerCarConcept T>
 	void plugin_on_pre_engine_tick_inner(MainCharacter *const main_character,
 										 PlayerCarInterface<T> *const player_car, float delta)
 	{
+		process_ui_enter_exit();
 		process_on_level_load(main_character, player_car, delta);
 		process_car_enter_exit(main_character, player_car, delta);
 		process_controller_aim(main_character, player_car, delta);
@@ -615,6 +685,9 @@ class PacificDrivePlugin : public uevr::Plugin
 	bool m_was_rendering_desktop{false};
 
 	std::recursive_mutex m_imgui_mutex{};
+	bool last_is_is_drawing_ui = false;
+
+	static inline bool m_car_autostart_allowed = true;
 
 	glm::vec3 m_euler{};
 	glm::vec3 m_euler_delta{};
