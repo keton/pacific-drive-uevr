@@ -2,7 +2,7 @@
 
 # Usage:
 # Press Win + R
-# powershell -nop -c "iex(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/keton/pacific-drive-uevr/master/pd-install.ps1')"
+# powershell -ExecutionPolicy Bypass -c "iex(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/keton/pacific-drive-uevr/master/pd-install.ps1')"
 
 $elevatedScript = {
 	# Stop executing script on any error
@@ -24,8 +24,8 @@ $elevatedScript = {
 	Write-Output "Temporary dir: $tempFileFolder"
 
 	Write-Output "Creating necessary folders"
-	mkdir "$env:APPDATA\UnrealVRMod\PenDriverPro-Win64-Shipping" -Force
-	mkdir "$env:APPDATA\raicuparta\rai-pal\data\mod-loaders\runnable\mods\chihuahua" -Force
+	mkdir "$env:APPDATA\UnrealVRMod\PenDriverPro-Win64-Shipping" -Force  > $null
+	mkdir "$env:APPDATA\raicuparta\rai-pal\data\mod-loaders\runnable\mods\chihuahua" -Force  > $null
 
 	Write-Output "Adding Windows Defender exceptions"
 	Add-MpPreference -ExclusionPath "$env:APPDATA\UnrealVRMod" -Force
