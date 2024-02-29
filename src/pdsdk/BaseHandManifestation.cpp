@@ -60,7 +60,7 @@ static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_s
 static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_rotation_offset{
 	{bmt::Unknown, {.x = 0.0f, .y = 0.0f, .z = 0.0f}}, // default rotation if not found
 
-	{bmt::Flashlight, {1.438f, -3.129f, -2.968f}},
+	{bmt::Flashlight, {1.486f, 0.771f, 1.036f}},
 	{bmt::GarageGasPumpHandle, {.x = -0.016f, .y = 1.607f, .z = 1.593f}},
 	{bmt::ResourceGasPumpHandle, {.x = 0.057f, .y = 1.622f, .z = 1.685f}},
 	{bmt::Unlocker, {.x = 0.007f, .y = 0.081f, .z = -3.129f}},
@@ -70,7 +70,7 @@ static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_r
 static const std::map<BaseHandManifestation::Type, UEVR_Vector3f> item_type_to_position_offset{
 	{bmt::Unknown, {0.0f, 0.0f, 0.0f}}, // default position if not found
 
-	{bmt::Flashlight, {-2.789f, -0.426f, 8.980f}},
+	{bmt::Flashlight, {0.647f, -5.304f, 0.693f}},
 	{bmt::GarageGasPumpHandle, {-18.852f, -4.755f, -18.571f}},
 	{bmt::ResourceGasPumpHandle, {-7.775f, 6.137f, -7.347f}},
 	{bmt::Unlocker, {3.587f, 44.140f, 18.766f}},
