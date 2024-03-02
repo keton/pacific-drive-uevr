@@ -352,6 +352,7 @@ class PacificDrivePlugin : public uevr::Plugin
 			ImGui::Text("is_aim_allowed(): %u", vr->is_aim_allowed());
 			ImGui::Text("m_last_aim_method: %u", m_last_aim_method);
 			ImGui::Text("m_player_in_car: %u", m_player_in_car);
+			ImGui::Text("m_intro_car_used: %u", m_intro_car_used);
 			ImGui::Text("m_force_player_in_car: %u", m_force_player_in_car);
 			ImGui::Text("Angle X:%.2f Y:%.2f Z:%.2f", m_euler.x, m_euler.y, m_euler.z);
 			ImGui::Text("Delta X:%.2f Y:%.2f Z:%.2f", m_euler_delta.x, m_euler_delta.y,
@@ -396,7 +397,7 @@ class PacificDrivePlugin : public uevr::Plugin
 	{
 		bool current_player_in_car = main_character->is_player_in_car() || m_force_player_in_car;
 
-		if(current_player_in_car != m_player_in_car) {
+		if((current_player_in_car != m_player_in_car) && (m_intro_car_used == false)) {
 			if(current_player_in_car) {
 				API::get()->log_info("CarEnterExit::Enter");
 
@@ -594,11 +595,11 @@ class PacificDrivePlugin : public uevr::Plugin
 				m_force_player_in_car = false;
 			}
 
-			if(m_force_player_in_car && player_car_instance.contains(L"BP_PlayerCar_Intro")) {
+			if(player_car_instance.starts_with(L"BP_PlayerCar_Intro_")) {
 				// don't trigger on car enter event in intro
-				m_player_in_car = true;
+				m_intro_car_used = true;
 			} else {
-				m_player_in_car = false;
+				m_intro_car_used = false;
 			}
 
 			m_active_item_name = {};
@@ -695,6 +696,7 @@ class PacificDrivePlugin : public uevr::Plugin
 
 	bool m_player_in_car = false;
 	bool m_force_player_in_car = false;
+	bool m_intro_car_used = false;
 
 	AimMethod m_last_aim_method = AimMethod::GAME;
 
